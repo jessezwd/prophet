@@ -1,6 +1,9 @@
 # Compiled python modules.
 *.pyc
 
+# Persisted models.
+*.pkl
+
 # Setuptools distribution folder.
 python/dist/
 
@@ -12,3 +15,5 @@ build/
 .ipynb_checkpoints
 
 *.*~
+
+*.idea

@@ -2,7 +2,7 @@
 % Please edit documentation in R/prophet.R
 \name{logistic_growth_init}
 \alias{logistic_growth_init}
-\title{Initialize logistic growth}
+\title{Initialize logistic growth.}
 \usage{
 logistic_growth_init(df)
 }
@@ -19,4 +19,4 @@ Provides a strong initialization for logistic growth by calculating the
 growth and offset parameters that pass the function through the first and
 last points in the time series.
 }
-
+\keyword{internal}

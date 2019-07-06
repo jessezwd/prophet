@@ -9,9 +9,9 @@ sample_predictive_trend(model, df, iteration)
 \arguments{
 \item{model}{Prophet object.}
 
-\item{df}{Dataframe that was fit by Prophet.}
+\item{df}{Prediction dataframe.}
 
-\item{iteration}{Int sampling iteration ot use parameters from.}
+\item{iteration}{Int sampling iteration to use parameters from.}
 }
 \value{
 Vector of simulated trend over df$t.
@@ -19,4 +19,4 @@ Vector of simulated trend over df$t.
 \description{
 Simulate the trend using the extrapolated generative model.
 }
-
+\keyword{internal}

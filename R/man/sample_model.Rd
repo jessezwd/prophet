@@ -4,21 +4,25 @@
 \alias{sample_model}
 \title{Simulate observations from the extrapolated generative model.}
 \usage{
-sample_model(m, df, seasonal.features, iteration)
+sample_model(m, df, seasonal.features, iteration, s_a, s_m)
 }
 \arguments{
 \item{m}{Prophet object.}
 
-\item{df}{Dataframe that was fit by Prophet.}
+\item{df}{Prediction dataframe.}
 
 \item{seasonal.features}{Data frame of seasonal features}
 
-\item{iteration}{Int sampling iteration ot use parameters from.}
+\item{iteration}{Int sampling iteration to use parameters from.}
+
+\item{s_a}{Indicator vector for additive components}
+
+\item{s_m}{Indicator vector for multiplicative components}
 }
 \value{
-List of trend, seasonality, and yhat, each a vector like df$t.
+List of trend and yhat, each a vector like df$t.
 }
 \description{
 Simulate observations from the extrapolated generative model.
 }
-
+\keyword{internal}

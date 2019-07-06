@@ -1,5 +1,11 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import os.path
 import pickle
+import platform
 import sys
 
 from pkg_resources import (
@@ -8,30 +14,54 @@ from pkg_resources import (
     add_activation_listener,
     require,
 )
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.build_py import build_py
+from setuptools.command.develop import develop
 from setuptools.command.test import test as test_command
+
+
+PLATFORM = 'unix'
+if platform.platform().startswith('Win'):
+    PLATFORM = 'win'
+
+MODEL_DIR = os.path.join('stan', PLATFORM)
+MODEL_TARGET_DIR = os.path.join('fbprophet', 'stan_model')
+
+
+def build_stan_model(target_dir, model_dir=MODEL_DIR):
+    from pystan import StanModel
+    model_name = 'prophet.stan'
+    target_name = 'prophet_model.pkl'
+    with open(os.path.join(model_dir, model_name)) as f:
+        model_code = f.read()
+    sm = StanModel(model_code=model_code)
+    with open(os.path.join(target_dir, target_name), 'wb') as f:
+        pickle.dump(sm, f, protocol=pickle.HIGHEST_PROTOCOL)
+
 
 class BuildPyCommand(build_py):
     """Custom build command to pre-compile Stan models."""
 
     def run(self):
         if not self.dry_run:
-            self.build_stan_models()
+            target_dir = os.path.join(self.build_lib, MODEL_TARGET_DIR)
+            self.mkpath(target_dir)
+            build_stan_model(target_dir)
 
         build_py.run(self)
 
-    def build_stan_models(self):
-        from pystan import StanModel
-        target_dir = os.path.join(self.build_lib, 'fbprophet/stan_models')
-        self.mkpath(target_dir)
 
-        for model_type in ['linear', 'logistic']:
-            with open('stan/prophet_{}_growth.stan'.format(model_type)) as f:
-                model_code = f.read()
-            sm = StanModel(model_code=model_code)
-            with open(os.path.join(target_dir, '{}_growth.pkl'.format(model_type)), 'wb') as f:
-                pickle.dump(sm, f)
+class DevelopCommand(develop):
+    """Custom develop command to pre-compile Stan models in-place."""
+
+    def run(self):
+        if not self.dry_run:
+            target_dir = os.path.join(self.setup_path, MODEL_TARGET_DIR)
+            self.mkpath(target_dir)
+            build_stan_model(target_dir)
+
+        develop.run(self)
+
 
 class TestCommand(test_command):
     """We must run tests on the build directory, not source."""
@@ -67,33 +97,30 @@ class TestCommand(test_command):
             sys.modules.update(old_modules)
             working_set.__init__()
 
+with open('requirements.txt', 'r') as f:
+    install_requires = f.read().splitlines()
+
 setup(
     name='fbprophet',
-    version='0.1.post1',
+    version='0.5',
     description='Automatic Forecasting Procedure',
-    url='https://facebookincubator.github.io/prophet/',
-    author='Sean J. Taylor <sjt@fb.com>, Ben Letham <bletham@fb.com>',
-    author_email='sjt@fb.com',
-    license='BSD',
-    packages=['fbprophet', 'fbprophet.tests'],
+    url='https://facebook.github.io/prophet/',
+    author='Sean J. Taylor <sjtz@pm.me>, Ben Letham <bletham@fb.com>',
+    author_email='sjtz@pm.me',
+    license='MIT',
+    packages=find_packages(),
     setup_requires=[
-        'Cython>=0.22',
-        'pystan>=2.8',
     ],
-    install_requires=[
-        'matplotlib',
-        'numpy',
-        'pandas',
-        'pystan>=2.8',
-    ],
+    install_requires=install_requires,
     zip_safe=False,
     include_package_data=True,
     cmdclass={
         'build_py': BuildPyCommand,
+        'develop': DevelopCommand,
         'test': TestCommand,
     },
-    test_suite='fbprophet.tests.test_prophet',
+    test_suite='fbprophet.tests',
     long_description="""
-Implements a procedure for forecasting time series data based on an additive model where non-linear trends are fit with yearly and weekly seasonality, plus holidays.  It works best with daily periodicity data with at least one year of historical data.  Prophet is robust to missing data, shifts in the trend, and large outliers.
+Implements a procedure for forecasting time series data based on an additive model where non-linear trends are fit with yearly, weekly, and daily seasonality, plus holiday effects. It works best with time series that have strong seasonal effects and several seasons of historical data. Prophet is robust to missing data and shifts in the trend, and typically handles outliers well.
 """
 )
